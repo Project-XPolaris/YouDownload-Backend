@@ -2,13 +2,14 @@ package router
 
 import (
 	"fmt"
-	"github.com/anatasluo/ant/backend/engine"
 	"github.com/julienschmidt/httprouter"
+	"github.com/projectxpolaris/youdownload/backend/engine"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 func addOneTorrentFromFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
@@ -137,7 +138,14 @@ func stopOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 func setTorrentFilePriority(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	hexString := r.FormValue("hexString")
 	filePath := r.FormValue("filePath")
-	runningEngine.SetFilePriority(hexString,filePath)
+	rawLevel := r.FormValue("filePath")
+	level,err := strconv.Atoi(rawLevel)
+	if err != nil {
+		WriteResponse(w, JsonFormat{
+			"success":false,
+		})
+	}
+	runningEngine.SetFilePriority(hexString,filePath,level)
 	WriteResponse(w, JsonFormat{
 		"success":true,
 	})

@@ -3,7 +3,7 @@ package engine
 import (
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
-	"github.com/anatasluo/ant/backend/setting"
+	"github.com/projectxpolaris/youdownload/backend/setting"
 	log "github.com/sirupsen/logrus"
 	"path/filepath"
 )
@@ -62,6 +62,19 @@ func (engine *Engine)setEnvironment()() {
 			if tmpErr != nil {
 				logger.WithFields(log.Fields{"Error":tmpErr}).Info("Failed to add torrent to client")
 			}
+
+			// set file pior
+			tmpTorrent, isExist := engine.TorrentEngine.Torrent(singleLog.HashInfoBytes())
+			if isExist {
+				for _, torrentFile := range tmpTorrent.Files() {
+					for _, fileConfig := range singleLog.Files {
+						if fileConfig.Path == torrentFile.Path(){
+							ApplyPriority(torrentFile,fileConfig.Priority)
+						}
+					}
+
+				}
+			}
 		}
 	}
 	engine.UpdateInfo()
@@ -90,6 +103,7 @@ func (engine *Engine)Restart()() {
 
 }
 
+// save Torrent Logs to DB
 func (engine *Engine)SaveInfo()() {
 	//fmt.Printf("%+v\n", engine.EngineRunningInfo.TorrentLogsAndID);
 	tmpErr := engine.TorrentDB.DB.Save(&engine.EngineRunningInfo.TorrentLogsAndID)

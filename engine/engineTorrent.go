@@ -72,6 +72,7 @@ func (engine *Engine) AddOneTorrentFromMagnet(linkAddress string) (tmpTorrent *t
 					if err != nil {
 						logger.WithFields(log.Fields{"Error": err, "Torrent": tmpTorrent}).Error("Unable to resolve magnet")
 					} else {
+						// TODO update files information
 						logger.Debug("Add torrent from magnet")
 						engine.EngineRunningInfo.UpdateMagnetInfo(tmpTorrent)
 						engine.GenerateInfoFromTorrent(tmpTorrent)
@@ -191,15 +192,42 @@ func (engine *Engine) WaitForCompleted(singleTorrent *torrent.Torrent) () {
 	}()
 }
 
-func (engine *Engine) SetFilePriority(hexString string, filePath string) {
+func (engine *Engine) SetFilePriority(hexString string, filePath string,level int) {
 	singleTorrent, torrentExist := engine.GetOneTorrent(hexString)
-	if torrentExist {
+	record, recordExist := engine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
+	if torrentExist && recordExist {
 		for _, torrentFile := range singleTorrent.Files() {
 			if torrentFile.Path() == filePath {
 				torrentFile.SetPriority(torrent.PiecePriorityHigh)
+				//save in record
+				if record.Files == nil {
+					// not has previous config
+					record.Files = make([]TorrentLogFile, 0)
+					record.Files = append(record.Files, TorrentLogFile{
+						Path:     torrentFile.Path(),
+						Priority: torrent.PiecePriorityHigh.BitmapPriority(),
+					})
+				} else {
+					updateFlag := false
+
+					for recordIdx := range record.Files {
+						iterRecord := &(record.Files[recordIdx])
+						if iterRecord.Path == torrentFile.Path() {
+							iterRecord.setPriority(GetPriorityIndex(torrent.PiecePriorityHigh))
+							updateFlag = true
+						}
+					}
+					if !updateFlag {
+						record.Files = append(record.Files, TorrentLogFile{
+							Path:     torrentFile.Path(),
+							Priority: torrent.PiecePriorityHigh.BitmapPriority(),
+						})
+					}
+				}
 			}
 
 		}
+
 		engine.UpdateInfo()
 		engine.SaveInfo()
 	}
