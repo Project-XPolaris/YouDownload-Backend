@@ -138,12 +138,13 @@ func stopOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 func setTorrentFilePriority(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	hexString := r.FormValue("hexString")
 	filePath := r.FormValue("filePath")
-	rawLevel := r.FormValue("filePath")
+	rawLevel := r.FormValue("level")
 	level,err := strconv.Atoi(rawLevel)
 	if err != nil {
 		WriteResponse(w, JsonFormat{
 			"success":false,
 		})
+		return
 	}
 	runningEngine.SetFilePriority(hexString,filePath,level)
 	WriteResponse(w, JsonFormat{

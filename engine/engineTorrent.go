@@ -198,29 +198,30 @@ func (engine *Engine) SetFilePriority(hexString string, filePath string,level in
 	if torrentExist && recordExist {
 		for _, torrentFile := range singleTorrent.Files() {
 			if torrentFile.Path() == filePath {
-				torrentFile.SetPriority(torrent.PiecePriorityHigh)
+				ApplyPriority(torrentFile,level)
 				//save in record
 				if record.Files == nil {
 					// not has previous config
 					record.Files = make([]TorrentLogFile, 0)
 					record.Files = append(record.Files, TorrentLogFile{
 						Path:     torrentFile.Path(),
-						Priority: torrent.PiecePriorityHigh.BitmapPriority(),
+						Priority: level,
 					})
 				} else {
 					updateFlag := false
-
 					for recordIdx := range record.Files {
+						// has record
 						iterRecord := &(record.Files[recordIdx])
 						if iterRecord.Path == torrentFile.Path() {
-							iterRecord.setPriority(GetPriorityIndex(torrent.PiecePriorityHigh))
+							iterRecord.setPriority(level)
 							updateFlag = true
 						}
 					}
 					if !updateFlag {
+						// not has
 						record.Files = append(record.Files, TorrentLogFile{
 							Path:     torrentFile.Path(),
-							Priority: torrent.PiecePriorityHigh.BitmapPriority(),
+							Priority: level,
 						})
 					}
 				}
