@@ -24,6 +24,7 @@ func InitRouter() *negroni.Negroni {
 	handleWS(router)
 	handlePlayer(router)
 	handleSetting(router)
+	handleFile(router)
 
 	// Use global middleware
 	n := negroni.New()

@@ -106,7 +106,6 @@ func (engine *Engine) GetOneTorrent(hexString string) (tmpTorrent *torrent.Torre
 		isExist = false
 	} else {
 		tmpTorrent, isExist = engine.TorrentEngine.Torrent(torrentHash)
-
 		//any operation on magnet is forbidden
 		if isExist {
 			torrentLog, _ := engine.EngineRunningInfo.HashToTorrentLog[tmpTorrent.InfoHash()]
@@ -231,6 +230,7 @@ func (engine *Engine) SetFilePriority(hexString string, filePath string,level in
 
 		engine.UpdateInfo()
 		engine.SaveInfo()
+
 	}
 }
 func (engine *Engine) StopOneTorrent(hexString string) (stopped bool) {

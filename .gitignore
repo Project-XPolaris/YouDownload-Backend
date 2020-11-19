@@ -18,3 +18,5 @@
 /download
 *.db
 /.idea
+
+downloader/engine_test.go

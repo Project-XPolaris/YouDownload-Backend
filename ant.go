@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/projectxpolaris/youdownload/backend/downloader"
 	"github.com/projectxpolaris/youdownload/backend/engine"
 	"github.com/projectxpolaris/youdownload/backend/router"
 	"github.com/projectxpolaris/youdownload/backend/setting"
@@ -14,10 +15,10 @@ import (
 )
 
 var (
-	clientConfig 		= setting.GetClientSetting()
-	logger 				= clientConfig.LoggerSetting.Logger
-	torrentEngine 		= engine.GetEngine()
-	nRouter				  *negroni.Negroni
+	clientConfig   = setting.GetClientSetting()
+	logger         = clientConfig.LoggerSetting.Logger
+	torrentEngine  = engine.GetEngine()
+	nRouter        *negroni.Negroni
 )
 
 func runAPP() {
@@ -26,13 +27,18 @@ func runAPP() {
 		nRouter = router.InitRouter()
 		err := http.ListenAndServe(clientConfig.ConnectSetting.Addr, nRouter)
 		if err != nil {
-			logger.WithFields(log.Fields{"Error":err}).Fatal("Failed to created http service")
+			logger.WithFields(log.Fields{"Error": err}).Fatal("Failed to created http service")
 		}
 
 	}()
 }
 
-func cleanUp()  {
+func runFileDownloader () {
+	go func() {
+		downloader.DefaultDownloader.Run()
+	}()
+}
+func cleanUp() {
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt,
@@ -47,13 +53,13 @@ func cleanUp()  {
 	}()
 }
 
-func test()  {
+func test() {
 
 }
 func main() {
+	runFileDownloader()
 	runAPP()
 	cleanUp()
 	test()
 	runtime.Goexit()
 }
-

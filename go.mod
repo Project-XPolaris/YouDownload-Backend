@@ -7,6 +7,7 @@ require (
 	github.com/anacrolix/missinggo v0.0.0-20181129073415-3237bf955fed
 	github.com/anacrolix/torrent v1.0.0
 	github.com/asdine/storm v2.1.2+incompatible
+	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/dustin/go-humanize v1.0.0
 	github.com/glycerine/goconvey v0.0.0-20190410193231-58a59202ab31 // indirect
 	github.com/google/go-cmp v0.5.1 // indirect
@@ -17,6 +18,7 @@ require (
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pelletier/go-toml v1.2.0
 	github.com/rs/cors v1.6.0
+	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.2.0
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
