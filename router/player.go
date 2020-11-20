@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/julienschmidt/httprouter"
-	"github.com/projectxpolaris/youdownload/backend/engine"
+	"github.com/projectxpolaris/youdownload/backend/torrent"
 	"net/http"
 	"time"
 )
@@ -13,7 +13,7 @@ func startPlay(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fileServed := false
 	if isExist {
 		singleTorrentLog := runningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
-		if singleTorrentLog.Status == engine.RunningStatus || singleTorrentLog.Status == engine.CompletedStatus {
+		if singleTorrentLog.Status == torrent.RunningStatus || singleTorrentLog.Status == torrent.CompletedStatus {
 			fileEntry, target, err := runningEngine.GetReaderFromTorrent(singleTorrent, "")
 			if err != nil {
 				logger.Error("Unable to get reader : ", err)

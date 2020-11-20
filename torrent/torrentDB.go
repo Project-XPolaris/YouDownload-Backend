@@ -1,23 +1,18 @@
-package engine
+package torrent
 
 import (
 	"github.com/asdine/storm"
+	"github.com/projectxpolaris/youdownload/backend/database"
 	log "github.com/sirupsen/logrus"
 )
 
 type TorrentDB struct {
 	DB 		*storm.DB
-	Path	string
 }
 
-func GetTorrentDB(dbPath string) *TorrentDB {
-	db, err := storm.Open(dbPath)
+func GetTorrentDB() *TorrentDB {
 	var torrentDB	TorrentDB
-	torrentDB.DB = db
-	torrentDB.Path = dbPath
-	if err != nil {
-		log.WithFields(log.Fields{"Error": err, "Path": torrentDB.Path}).Fatal("Failed to create database for engine")
-	}
+	torrentDB.DB = database.Instance
 	return &torrentDB
 }
 

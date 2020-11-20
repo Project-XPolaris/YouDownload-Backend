@@ -22,7 +22,7 @@
   maxestablishedconns = 100
   socksproxyurl = ""
   tmpdir = "C:\\Users\\Takay\\Desktop\\backend\\tmp"
-  torrentdbpath = "storm.db"
+  dbpath = "storm.db"
   usesocksproxy = false
 
 [loggersetting]

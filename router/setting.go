@@ -3,7 +3,7 @@ package router
 import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
-	"github.com/projectxpolaris/youdownload/backend/engine"
+	"github.com/projectxpolaris/youdownload/backend/torrent"
 	"github.com/projectxpolaris/youdownload/backend/setting"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -18,7 +18,7 @@ func getStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func getRunningQueue(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var tmp engine.TorrentLogsAndID
+	var tmp torrent.TorrentLogsAndID
 	runningEngine.TorrentDB.GetLogs(&tmp)
 	WriteResponse(w, tmp)
 }

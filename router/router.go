@@ -3,7 +3,7 @@ package router
 import (
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/projectxpolaris/youdownload/backend/engine"
+	"github.com/projectxpolaris/youdownload/backend/torrent"
 	"github.com/projectxpolaris/youdownload/backend/setting"
 	"github.com/rs/cors"
 	"github.com/urfave/negroni"
@@ -11,11 +11,12 @@ import (
 
 var (
 	clientConfig 			= setting.GetClientSetting()
-	runningEngine		 	= engine.GetEngine()
+	runningEngine		 	*torrent.Engine
 	logger 					= clientConfig.LoggerSetting.Logger
 )
 
 func InitRouter() *negroni.Negroni {
+	runningEngine = torrent.GetEngine()
 	router := httprouter.New()
 
 	// Enable router

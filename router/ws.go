@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/projectxpolaris/youdownload/backend/engine"
+	"github.com/projectxpolaris/youdownload/backend/torrent"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -27,14 +27,14 @@ func torrentProgress (w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	defer func() {
 		_ = conn.Close()
 	}()
-	var tmp engine.MessageFromWeb
-	var resInfo engine.TorrentProgressInfo
+	var tmp torrent.MessageFromWeb
+	var resInfo torrent.TorrentProgressInfo
 	for {
 		select {
 			case cmdID := <- runningEngine.EngineRunningInfo.EngineCMD: {
 				logger.Debug("Send CMD Now", cmdID)
-				if cmdID == engine.RefreshInfo {
-					resInfo.MessageType = engine.RefreshInfo
+				if cmdID == torrent.RefreshInfo {
+					resInfo.MessageType = torrent.RefreshInfo
 					err = conn.WriteJSON(resInfo)
 					if err != nil {
 						logger.Error("Unable to write Message", err)
@@ -49,13 +49,13 @@ func torrentProgress (w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			break
 		}
 
-		if tmp.MessageType == engine.GetInfo {
+		if tmp.MessageType == torrent.GetInfo {
 			singleTorrent, isExist := runningEngine.GetOneTorrent(tmp.HexString)
 			if isExist {
 				singleTorrentLog, _ := runningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
-				if singleTorrentLog.Status == engine.RunningStatus || singleTorrentLog.Status == engine.CompletedStatus {
+				if singleTorrentLog.Status == torrent.RunningStatus || singleTorrentLog.Status == torrent.CompletedStatus {
 					singleWebLog := runningEngine.GenerateInfoFromTorrent(singleTorrent)
-					resInfo.MessageType = engine.GetInfo
+					resInfo.MessageType = torrent.GetInfo
 					resInfo.HexString = singleWebLog.HexString
 					resInfo.Percentage = singleWebLog.Percentage
 					resInfo.LeftTime = singleWebLog.LeftTime

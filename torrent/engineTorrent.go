@@ -1,4 +1,4 @@
-package engine
+package torrent
 
 import (
 	"errors"
@@ -240,7 +240,7 @@ func (engine *Engine) StopOneTorrent(hexString string) (stopped bool) {
 		if singleTorrentLog.Status != CompletedStatus {
 			singleTorrentLog.Status = StoppedStatus
 			engine.SaveInfo()
-			//engine.EngineRunningInfo.UpdateTorrentLog()
+			//torrent.EngineRunningInfo.UpdateTorrentLog()
 			singleTorrentLogExtend, extendExist := engine.EngineRunningInfo.TorrentLogExtends[singleTorrent.InfoHash()]
 			if extendExist && singleTorrentLogExtend.HasStatusPub && singleTorrentLogExtend.StatusPub != nil {
 				singleTorrent.Files()
@@ -275,9 +275,9 @@ func (engine *Engine) DelOneTorrent(hexString string) (deleted bool) {
 			}
 			filePath := filepath.Join(engine.EngineRunningInfo.TorrentLogs[index].StoragePath, engine.EngineRunningInfo.TorrentLogs[index].TorrentName)
 			logger.WithFields(log.Fields{"Path": filePath}).Info("Files have been deleted!")
-			//fmt.Printf("Before delete: %+v\n", engine.EngineRunningInfo.TorrentLogsAndID)
+			//fmt.Printf("Before delete: %+v\n", torrent.EngineRunningInfo.TorrentLogsAndID)
 			engine.EngineRunningInfo.TorrentLogsAndID.TorrentLogs = append(engine.EngineRunningInfo.TorrentLogs[:index], engine.EngineRunningInfo.TorrentLogs[index+1:]...)
-			//fmt.Printf("After delete: %+v\n", engine.EngineRunningInfo.TorrentLogsAndID)
+			//fmt.Printf("After delete: %+v\n", torrent.EngineRunningInfo.TorrentLogsAndID)
 			engine.UpdateInfo()
 			engine.SaveInfo()
 			delFiles(filePath)

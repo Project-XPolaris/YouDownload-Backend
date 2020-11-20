@@ -1,4 +1,4 @@
-package engine
+package torrent
 
 import (
 	"github.com/anacrolix/torrent"
@@ -31,12 +31,12 @@ func GetEngine() *Engine {
 }
 
 func (engine *Engine)initAndRunEngine()()  {
-	engine.TorrentDB = GetTorrentDB(clientConfig.EngineSetting.TorrentDBPath)
+	engine.TorrentDB = GetTorrentDB()
 
 	var tmpErr error
 	engine.TorrentEngine, tmpErr = torrent.NewClient(&clientConfig.EngineSetting.TorrentConfig)
 	if tmpErr != nil {
-		logger.WithFields(log.Fields{"Error":tmpErr}).Error("Failed to Created torrent engine")
+		logger.WithFields(log.Fields{"Error":tmpErr}).Error("Failed to Created torrent torrent")
 	}
 
 	engine.WebInfo = &WebviewInfo{}
@@ -82,13 +82,13 @@ func (engine *Engine)setEnvironment()() {
 
 func (engine *Engine)Restart()() {
 
-	logger.Info("Restart engine")
+	logger.Info("Restart torrent")
 
 	//To handle problems caused by change of settings
 	for index := range engine.EngineRunningInfo.TorrentLogs {
 		if engine.EngineRunningInfo.TorrentLogs[index].Status != CompletedStatus && engine.EngineRunningInfo.TorrentLogs[index].StoragePath != clientConfig.TorrentConfig.DataDir{
 			filePath := filepath.Join(engine.EngineRunningInfo.TorrentLogs[index].StoragePath, engine.EngineRunningInfo.TorrentLogs[index].TorrentName)
-			log.WithFields(log.Fields{"Path":filePath}).Info("To restart engine, these unfinished files will be deleted")
+			log.WithFields(log.Fields{"Path":filePath}).Info("To restart torrent, these unfinished files will be deleted")
 			singleTorrent, torrentExist := engine.GetOneTorrent(engine.EngineRunningInfo.TorrentLogs[index].HashInfoBytes().HexString())
 			if torrentExist {
 				singleTorrent.Drop()
@@ -105,7 +105,7 @@ func (engine *Engine)Restart()() {
 
 // save Torrent Logs to DB
 func (engine *Engine)SaveInfo()() {
-	//fmt.Printf("%+v\n", engine.EngineRunningInfo.TorrentLogsAndID);
+	//fmt.Printf("%+v\n", torrent.EngineRunningInfo.TorrentLogsAndID);
 	tmpErr := engine.TorrentDB.DB.Save(&engine.EngineRunningInfo.TorrentLogsAndID)
 	if tmpErr != nil {
 		logger.WithFields(log.Fields{"Error":tmpErr}).Fatal("Failed to save torrent queues")

@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/projectxpolaris/youdownload/backend/engine"
+	"github.com/projectxpolaris/youdownload/backend/torrent"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -13,7 +13,6 @@ import (
 )
 
 func addOneTorrentFromFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
-
 	//Get torrent file from form
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
@@ -78,19 +77,19 @@ func getOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 }
 
 
-func appendRunningTorrents(resInfo []engine.TorrentWebInfo)([]engine.TorrentWebInfo) {
+func appendRunningTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWebInfo) {
 	for _, singleTorrent := range runningEngine.TorrentEngine.Torrents() {
 		singleTorrentLog, isExist := runningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
-		if isExist && singleTorrentLog.Status != engine.CompletedStatus {
+		if isExist && singleTorrentLog.Status != torrent.CompletedStatus {
 			resInfo = append(resInfo, *runningEngine.GenerateInfoFromTorrent(singleTorrent))
 		}
 	}
 	return resInfo
 }
 
-func appendCompletedTorrents(resInfo []engine.TorrentWebInfo)([]engine.TorrentWebInfo) {
+func appendCompletedTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWebInfo) {
 	for _, singleTorrentLog := range runningEngine.EngineRunningInfo.TorrentLogs {
-		if singleTorrentLog.Status == engine.CompletedStatus {
+		if singleTorrentLog.Status == torrent.CompletedStatus {
 			resInfo = append(resInfo, *runningEngine.GenerateInfoFromLog(singleTorrentLog))
 		}
 	}
@@ -99,14 +98,14 @@ func appendCompletedTorrents(resInfo []engine.TorrentWebInfo)([]engine.TorrentWe
 
 
 func getAllTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
-	resInfo := []engine.TorrentWebInfo{}
+	resInfo := []torrent.TorrentWebInfo{}
 	resInfo = appendRunningTorrents(resInfo)
 	resInfo = appendCompletedTorrents(resInfo)
 	WriteResponse(w, resInfo)
 }
 
 func getCompletedTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
-	resInfo := []engine.TorrentWebInfo{}
+	resInfo := []torrent.TorrentWebInfo{}
 	resInfo = appendCompletedTorrents(resInfo)
 	WriteResponse(w, resInfo)
 }
@@ -114,7 +113,7 @@ func getCompletedTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.
 
 
 func getAllEngineTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
-	resInfo := []engine.TorrentWebInfo{}
+	resInfo := []torrent.TorrentWebInfo{}
 	resInfo = appendRunningTorrents(resInfo)
 	WriteResponse(w, resInfo)
 }

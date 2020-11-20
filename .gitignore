@@ -20,3 +20,5 @@
 /.idea
 
 downloader/engine_test.go
+store_test.go
+*.db.lock

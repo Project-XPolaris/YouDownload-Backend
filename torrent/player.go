@@ -1,4 +1,4 @@
-package engine
+package torrent
 
 import (
 	"github.com/anacrolix/torrent"

@@ -16,6 +16,7 @@ type TaskStatus struct {
 	Progress     float64 `json:"progress"`
 	Filename     string  `json:"filename"`
 	ETA          string  `json:"eta"`
+	Status       string  `json:"status"`
 }
 
 func newTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -28,7 +29,7 @@ func newTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Write([]byte("success"))
 }
 func getDownloadStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	taskInfos := make([]TaskStatus,0)
+	taskInfos := make([]TaskStatus, 0)
 	for _, task := range downloader.DefaultDownloader.Pool.Tasks {
 		statusInfo := TaskStatus{
 			Id:           task.Id,
@@ -40,15 +41,23 @@ func getDownloadStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 			ETA:          task.Response.ETA().String(),
 			SavePath:     task.SavePath,
 			Url:          task.Url,
+			Status:       downloader.TaskStatusToTextMapping[task.Status],
 		}
 		taskInfos = append(taskInfos, statusInfo)
 	}
-	WriteResponse(w,JsonFormat{
-		"tasks":taskInfos,
+	WriteResponse(w, JsonFormat{
+		"tasks": taskInfos,
 	})
 }
-
-func handleFile(router *httprouter.Router)  {
+func pauseTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	taskId := r.FormValue("id")
+	downloader.DefaultDownloader.Pool.PauseTask(taskId)
+	WriteResponse(w, JsonFormat{
+		"result": "success",
+	})
+}
+func handleFile(router *httprouter.Router) {
 	router.GET("/file/tasks", getDownloadStatus)
 	router.POST("/file/tasks", newTask)
+	router.POST("/file/task/pause", pauseTask)
 }

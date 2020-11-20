@@ -1,8 +1,9 @@
 package main
 
 import (
+	"github.com/projectxpolaris/youdownload/backend/database"
 	"github.com/projectxpolaris/youdownload/backend/downloader"
-	"github.com/projectxpolaris/youdownload/backend/engine"
+	"github.com/projectxpolaris/youdownload/backend/torrent"
 	"github.com/projectxpolaris/youdownload/backend/router"
 	"github.com/projectxpolaris/youdownload/backend/setting"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +18,7 @@ import (
 var (
 	clientConfig   = setting.GetClientSetting()
 	logger         = clientConfig.LoggerSetting.Logger
-	torrentEngine  = engine.GetEngine()
+	torrentEngine  *torrent.Engine
 	nRouter        *negroni.Negroni
 )
 
@@ -57,6 +58,8 @@ func test() {
 
 }
 func main() {
+	database.InitDB(clientConfig.EngineSetting.DBPath)
+	torrentEngine = torrent.GetEngine()
 	runFileDownloader()
 	runAPP()
 	cleanUp()

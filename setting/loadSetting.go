@@ -35,15 +35,15 @@ type ConnectSetting struct {
 }
 
 type EngineSetting struct {
-	UseSocksproxy 			bool
-	SocksProxyURL 			string
-	MaxActiveTorrents		int
-	TorrentDBPath			string
-	TorrentConfig			torrent.ClientConfig `json:"-"`
-	Tmpdir					string
-	MaxEstablishedConns 	int
-	EnableDefaultTrackers 	bool
-	DefaultTrackers			[][]string
+	UseSocksproxy         bool
+	SocksProxyURL         string
+	MaxActiveTorrents     int
+	DBPath                string
+	TorrentConfig         torrent.ClientConfig `json:"-"`
+	Tmpdir                string
+	MaxEstablishedConns   int
+	EnableDefaultTrackers bool
+	DefaultTrackers       [][]string
 }
 
 type LoggerSetting struct {
@@ -100,7 +100,7 @@ func (clientConfig *ClientSetting) loadValueFromConfig()() {
 	clientConfig.EngineSetting.UseSocksproxy 		= globalViper.GetBool("EngineSetting.UseSocksproxy")
 	clientConfig.EngineSetting.SocksProxyURL 		= globalViper.GetString("EngineSetting.SocksProxyURL")
 	clientConfig.EngineSetting.MaxActiveTorrents 	= globalViper.GetInt("EngineSetting.MaxActiveTorrents")
-	clientConfig.EngineSetting.TorrentDBPath 		= globalViper.GetString("EngineSetting.TorrentDBPath")
+	clientConfig.EngineSetting.DBPath = globalViper.GetString("EngineSetting.DBPath")
 	clientConfig.EngineSetting.MaxEstablishedConns 	= globalViper.GetInt("EngineSetting.MaxEstablishedConns")
 	tmpDir, tmpErr := filepath.Abs(filepath.ToSlash(globalViper.GetString("EngineSetting.Tmpdir")))
 	_ = os.Mkdir(tmpDir, 0755)
