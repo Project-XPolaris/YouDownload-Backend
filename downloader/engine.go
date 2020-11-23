@@ -7,6 +7,8 @@ import (
 	"github.com/cavaliercoder/grab"
 	"github.com/projectxpolaris/youdownload/backend/database"
 	"github.com/rs/xid"
+	"github.com/sirupsen/logrus"
+	"log"
 	"sync"
 	"time"
 )
@@ -77,6 +79,10 @@ type Task struct {
 	Err      error
 	Cancel   context.CancelFunc
 	Status   int64
+	SaveComplete int64
+	SaveTotal  int64
+	SaveFileName string
+
 }
 type NewTaskConfig struct {
 	Url  string
@@ -84,6 +90,25 @@ type NewTaskConfig struct {
 }
 
 func (e *FileDownloaderEngine) Run() {
+	// import save task
+	var saveTasks []TaskSaveInfo
+	err := database.Instance.All(&saveTasks)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, saveTask := range saveTasks {
+		logrus.Info(saveTask.TaskId)
+		e.Pool.Tasks = append(e.Pool.Tasks, &Task{
+			Id:       saveTask.TaskId,
+			Url:      saveTask.Url,
+			SavePath: saveTask.Dest,
+			Status:   TaskStatusPause,
+			SaveComplete: saveTask.CompleteSize,
+			SaveTotal: saveTask.Total,
+			SaveFileName: saveTask.Filename,
+		})
+
+	}
 	// for task store
 	go func() {
 		e.TaskStore.Run()

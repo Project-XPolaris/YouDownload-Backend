@@ -33,15 +33,22 @@ func getDownloadStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	for _, task := range downloader.DefaultDownloader.Pool.Tasks {
 		statusInfo := TaskStatus{
 			Id:           task.Id,
-			CompleteSize: task.Response.BytesComplete(),
-			Total:        task.Response.Size,
-			Speed:        task.Response.BytesPerSecond(),
-			Progress:     task.Response.Progress(),
-			Filename:     task.Response.Filename,
-			ETA:          task.Response.ETA().String(),
 			SavePath:     task.SavePath,
 			Url:          task.Url,
 			Status:       downloader.TaskStatusToTextMapping[task.Status],
+		}
+		if task.Response == nil {
+			statusInfo.CompleteSize = task.SaveComplete
+			statusInfo.Total = task.SaveTotal
+			statusInfo.Progress = float64(task.SaveComplete) / float64(task.SaveTotal)
+			statusInfo.Filename =  task.SaveFileName
+
+		}else{
+			statusInfo.CompleteSize = task.Response.BytesComplete()
+			statusInfo.Total = task.Response.Size
+			statusInfo.Progress = task.Response.Progress()
+			statusInfo.ETA = task.Response.ETA().String()
+			statusInfo.Filename =  task.Response.Filename
 		}
 		taskInfos = append(taskInfos, statusInfo)
 	}

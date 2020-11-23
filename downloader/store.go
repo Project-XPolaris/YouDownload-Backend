@@ -7,12 +7,13 @@ import (
 )
 
 type TaskSaveInfo struct {
-	TaskId       string  `storm:"id"`
-	Url          string  `storm:"index"`
-	Dest         string  `storm:"index"`
-	CompleteSize int64 `storm:"index"`
-	Total        int64 `storm:"index"`
-	Status       int64 `storm:"index"`
+	TaskId       string `storm:"id"`
+	Url          string `storm:"index"`
+	Dest         string `storm:"index"`
+	CompleteSize int64  `storm:"index"`
+	Total        int64  `storm:"index"`
+	Status       int64  `storm:"index"`
+	Filename     string `storm:"index"`
 }
 
 func NewTaskSaveInfoFromTask(task *Task) *TaskSaveInfo {
@@ -23,6 +24,7 @@ func NewTaskSaveInfoFromTask(task *Task) *TaskSaveInfo {
 		CompleteSize: task.Response.BytesComplete(),
 		Total:        task.Response.Size,
 		Status:       task.Status,
+		Filename: task.Response.Filename,
 	}
 }
 
@@ -43,10 +45,10 @@ func saveInfo(info *TaskSaveInfo) {
 	}
 }
 func (s *TaskStore) Run() {
-	for  {
+	for {
 		select {
 		case info := <-s.SaveChan:
-			logrus.Info(fmt.Sprintf("save id = %s",info.TaskId))
+			logrus.Info(fmt.Sprintf("save id = %s", info.TaskId))
 			saveInfo(info)
 		}
 	}
