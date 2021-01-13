@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/projectxpolaris/youdownload/backend/application"
 	"github.com/projectxpolaris/youdownload/backend/database"
 	"github.com/projectxpolaris/youdownload/backend/downloader"
 	"github.com/projectxpolaris/youdownload/backend/torrent"
@@ -54,15 +55,11 @@ func cleanUp() {
 	}()
 }
 
-func test() {
 
-}
 func main() {
 	database.InitDB(clientConfig.EngineSetting.DBPath)
-	torrentEngine = torrent.GetEngine()
 	runFileDownloader()
-	runAPP()
+	application.RunApiService()
 	cleanUp()
-	test()
 	runtime.Goexit()
 }

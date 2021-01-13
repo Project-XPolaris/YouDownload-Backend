@@ -9,12 +9,12 @@ import (
 
 func startPlay(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	hexString := ps.ByName("hexString")
-	singleTorrent, isExist := runningEngine.GetOneTorrent(hexString)
+	singleTorrent, isExist := RunningEngine.GetOneTorrent(hexString)
 	fileServed := false
 	if isExist {
-		singleTorrentLog := runningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
+		singleTorrentLog := RunningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
 		if singleTorrentLog.Status == torrent.RunningStatus || singleTorrentLog.Status == torrent.CompletedStatus {
-			fileEntry, target, err := runningEngine.GetReaderFromTorrent(singleTorrent, "")
+			fileEntry, target, err := RunningEngine.GetReaderFromTorrent(singleTorrent, "")
 			if err != nil {
 				logger.Error("Unable to get reader : ", err)
 			} else {

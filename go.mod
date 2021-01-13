@@ -4,6 +4,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/Sereal/Sereal v0.0.0-20200820125258-a016b7cda3f3 // indirect
+	github.com/allentom/haruka v0.0.0-20201229093455-115f7b527b80
 	github.com/anacrolix/missinggo v0.0.0-20181129073415-3237bf955fed
 	github.com/anacrolix/torrent v1.0.0
 	github.com/asdine/storm v2.1.2+incompatible
@@ -15,14 +16,16 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/julienschmidt/httprouter v1.2.0
+	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pelletier/go-toml v1.2.0
-	github.com/rs/cors v1.6.0
+	github.com/rs/cors v1.7.0
 	github.com/rs/xid v1.2.1
-	github.com/sirupsen/logrus v1.2.0
+	github.com/sirupsen/logrus v1.7.0
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
 	github.com/spf13/viper v1.3.1
+	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/urfave/negroni v1.0.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.2 // indirect

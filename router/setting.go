@@ -14,12 +14,12 @@ func getSetting(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func getStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	runningEngine.TorrentEngine.WriteStatus(w)
+	RunningEngine.TorrentEngine.WriteStatus(w)
 }
 
 func getRunningQueue(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var tmp torrent.TorrentLogsAndID
-	runningEngine.TorrentDB.GetLogs(&tmp)
+	RunningEngine.TorrentDB.GetLogs(&tmp)
 	WriteResponse(w, tmp)
 }
 
@@ -31,13 +31,13 @@ func applySetting(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	if err != nil {
 		logger.WithFields(log.Fields{"Error": err}).Error("Failed to get new settings")
 	}else{
-		if runningEngine.EngineRunningInfo.HasRestarted == false {
-			runningEngine.EngineRunningInfo.HasRestarted = true
+		if RunningEngine.EngineRunningInfo.HasRestarted == false {
+			RunningEngine.EngineRunningInfo.HasRestarted = true
 			clientConfig.UpdateConfig(newSettings)
 			logger.WithFields(log.Fields{"Settings": newSettings}).Info("Setting update")
 			isApplied = true
-			runningEngine.Restart()
-			runningEngine.EngineRunningInfo.HasRestarted = false
+			RunningEngine.Restart()
+			RunningEngine.EngineRunningInfo.HasRestarted = false
 		}
 	}
 	WriteResponse(w, JsonFormat{

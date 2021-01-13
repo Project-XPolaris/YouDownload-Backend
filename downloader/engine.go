@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 )
-
 type FileDownloaderEngine struct {
 	Client    *grab.Client
 	Pool      *TaskPool
@@ -37,12 +36,23 @@ type TaskPool struct {
 }
 
 func (p *TaskPool) PauseTask(taskId string) {
-	defer p.Unlock()
 	for _, task := range p.Tasks {
 		if task.Id == taskId {
-			p.Lock()
 			task.Cancel()
-			task.Status = TaskStatusPause
+			task.Status = TaskStatusStopped
+			DefaultDownloader.TaskStore.SaveChan <- NewTaskSaveInfoFromTask(task)
+		}
+	}
+}
+
+func (p *TaskPool) StartTask(taskId string)  {
+
+	for _, task := range p.Tasks {
+		if task.Id == taskId {
+			p.NewTaskChan <- NewTaskConfig{
+				Url:  task.Url,
+				Dest: task.SavePath,
+			}
 			DefaultDownloader.TaskStore.SaveChan <- NewTaskSaveInfoFromTask(task)
 		}
 	}
@@ -62,12 +72,12 @@ func (p *TaskPool) RemoveTask(taskId string) {
 
 const (
 	TaskStatusRunning = iota + 1
-	TaskStatusPause
+	TaskStatusStopped
 )
 
 var TaskStatusToTextMapping = map[int64]string{
 	TaskStatusRunning: "Running",
-	TaskStatusPause:   "Pause",
+	TaskStatusStopped: "Stopped",
 }
 
 type Task struct {
@@ -99,12 +109,12 @@ func (e *FileDownloaderEngine) Run() {
 	for _, saveTask := range saveTasks {
 		logrus.Info(saveTask.TaskId)
 		e.Pool.Tasks = append(e.Pool.Tasks, &Task{
-			Id:       saveTask.TaskId,
-			Url:      saveTask.Url,
-			SavePath: saveTask.Dest,
-			Status:   TaskStatusPause,
+			Id:           saveTask.TaskId,
+			Url:          saveTask.Url,
+			SavePath:     saveTask.Dest,
+			Status:       TaskStatusStopped,
 			SaveComplete: saveTask.CompleteSize,
-			SaveTotal: saveTask.Total,
+			SaveTotal:    saveTask.Total,
 			SaveFileName: saveTask.Filename,
 		})
 
@@ -147,6 +157,7 @@ func (e *FileDownloaderEngine) Run() {
 				if err == nil && len(saveTask.TaskId) > 0 {
 					// exist
 					task.Id = saveTask.TaskId
+					task.SaveFileName = saveTask.Filename
 				}
 
 				request, err := grab.NewRequest(taskConfig.Dest, taskConfig.Url)

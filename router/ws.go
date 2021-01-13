@@ -31,7 +31,7 @@ func torrentProgress (w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	var resInfo torrent.TorrentProgressInfo
 	for {
 		select {
-			case cmdID := <- runningEngine.EngineRunningInfo.EngineCMD: {
+			case cmdID := <- RunningEngine.EngineRunningInfo.EngineCMD: {
 				logger.Debug("Send CMD Now", cmdID)
 				if cmdID == torrent.RefreshInfo {
 					resInfo.MessageType = torrent.RefreshInfo
@@ -50,11 +50,11 @@ func torrentProgress (w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		}
 
 		if tmp.MessageType == torrent.GetInfo {
-			singleTorrent, isExist := runningEngine.GetOneTorrent(tmp.HexString)
+			singleTorrent, isExist := RunningEngine.GetOneTorrent(tmp.HexString)
 			if isExist {
-				singleTorrentLog, _ := runningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
+				singleTorrentLog, _ := RunningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
 				if singleTorrentLog.Status == torrent.RunningStatus || singleTorrentLog.Status == torrent.CompletedStatus {
-					singleWebLog := runningEngine.GenerateInfoFromTorrent(singleTorrent)
+					singleWebLog := RunningEngine.GenerateInfoFromTorrent(singleTorrent)
 					resInfo.MessageType = torrent.GetInfo
 					resInfo.HexString = singleWebLog.HexString
 					resInfo.Percentage = singleWebLog.Percentage

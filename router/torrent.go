@@ -45,7 +45,7 @@ func addOneTorrentFromFile(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	//Start to add to client
-	tmpTorrent, err := runningEngine.AddOneTorrentFromFile(filePathAbs)
+	tmpTorrent, err := RunningEngine.AddOneTorrentFromFile(filePathAbs)
 	
 	var isAdded bool
 	if err != nil {
@@ -53,8 +53,8 @@ func addOneTorrentFromFile(w http.ResponseWriter, r *http.Request, ps httprouter
 		isAdded = false
 	}else{
 		if tmpTorrent != nil {
-			runningEngine.GenerateInfoFromTorrent(tmpTorrent)
-			runningEngine.StartDownloadTorrent(tmpTorrent.InfoHash().HexString())
+			RunningEngine.GenerateInfoFromTorrent(tmpTorrent)
+			RunningEngine.StartDownloadTorrent(tmpTorrent.InfoHash().HexString())
 			isAdded = true
 		}
 	}
@@ -67,9 +67,9 @@ func addOneTorrentFromFile(w http.ResponseWriter, r *http.Request, ps httprouter
 
 func getOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	hexString := r.FormValue("hexString")
-	singleTorrent, isExist := runningEngine.GetOneTorrent(hexString)
+	singleTorrent, isExist := RunningEngine.GetOneTorrent(hexString)
 	if isExist {
-		torrentWebInfo := runningEngine.GenerateInfoFromTorrent(singleTorrent)
+		torrentWebInfo := RunningEngine.GenerateInfoFromTorrent(singleTorrent)
 		WriteResponse(w, torrentWebInfo)
 	}else{
 		w.WriteHeader(http.StatusNotFound)
@@ -77,20 +77,20 @@ func getOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 }
 
 
-func appendRunningTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWebInfo) {
-	for _, singleTorrent := range runningEngine.TorrentEngine.Torrents() {
-		singleTorrentLog, isExist := runningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
+func AppendRunningTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWebInfo) {
+	for _, singleTorrent := range RunningEngine.TorrentEngine.Torrents() {
+		singleTorrentLog, isExist := RunningEngine.EngineRunningInfo.HashToTorrentLog[singleTorrent.InfoHash()]
 		if isExist && singleTorrentLog.Status != torrent.CompletedStatus {
-			resInfo = append(resInfo, *runningEngine.GenerateInfoFromTorrent(singleTorrent))
+			resInfo = append(resInfo, *RunningEngine.GenerateInfoFromTorrent(singleTorrent))
 		}
 	}
 	return resInfo
 }
 
-func appendCompletedTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWebInfo) {
-	for _, singleTorrentLog := range runningEngine.EngineRunningInfo.TorrentLogs {
+func AppendCompletedTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWebInfo) {
+	for _, singleTorrentLog := range RunningEngine.EngineRunningInfo.TorrentLogs {
 		if singleTorrentLog.Status == torrent.CompletedStatus {
-			resInfo = append(resInfo, *runningEngine.GenerateInfoFromLog(singleTorrentLog))
+			resInfo = append(resInfo, *RunningEngine.GenerateInfoFromLog(singleTorrentLog))
 		}
 	}
 	return resInfo
@@ -99,14 +99,14 @@ func appendCompletedTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.Torrent
 
 func getAllTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
 	resInfo := []torrent.TorrentWebInfo{}
-	resInfo = appendRunningTorrents(resInfo)
-	resInfo = appendCompletedTorrents(resInfo)
+	resInfo = AppendRunningTorrents(resInfo)
+	resInfo = AppendCompletedTorrents(resInfo)
 	WriteResponse(w, resInfo)
 }
 
 func getCompletedTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
 	resInfo := []torrent.TorrentWebInfo{}
-	resInfo = appendCompletedTorrents(resInfo)
+	resInfo = AppendCompletedTorrents(resInfo)
 	WriteResponse(w, resInfo)
 }
 
@@ -114,13 +114,13 @@ func getCompletedTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.
 
 func getAllEngineTorrents(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
 	resInfo := []torrent.TorrentWebInfo{}
-	resInfo = appendRunningTorrents(resInfo)
+	resInfo = AppendRunningTorrents(resInfo)
 	WriteResponse(w, resInfo)
 }
 
 func delOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	hexString := r.FormValue("hexString")
-	deleted := runningEngine.DelOneTorrent(hexString)
+	deleted := RunningEngine.DelOneTorrent(hexString)
 	WriteResponse(w, JsonFormat{
 		"IsDeleted":deleted,
 	})
@@ -128,7 +128,7 @@ func delOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 func stopOneTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	hexString := r.FormValue("hexString")
-	stopped := runningEngine.StopOneTorrent(hexString)
+	stopped := RunningEngine.StopOneTorrent(hexString)
 	WriteResponse(w, JsonFormat{
 		"IsStopped":stopped,
 	})
@@ -145,14 +145,14 @@ func setTorrentFilePriority(w http.ResponseWriter, r *http.Request, ps httproute
 		})
 		return
 	}
-	runningEngine.SetFilePriority(hexString,filePath,level)
+	RunningEngine.SetFilePriority(hexString,filePath,level)
 	WriteResponse(w, JsonFormat{
 		"success":true,
 	})
 }
 func startDownloadTorrent(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	hexString := r.FormValue("hexString")
-	downloaded := runningEngine.StartDownloadTorrent(hexString)
+	downloaded := RunningEngine.StartDownloadTorrent(hexString)
 	WriteResponse(w, JsonFormat{
 		"IsDownloading":downloaded,
 	})

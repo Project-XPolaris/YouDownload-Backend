@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	clientConfig 			= setting.GetClientSetting()
-	runningEngine		 	*torrent.Engine
-	logger 					= clientConfig.LoggerSetting.Logger
+	clientConfig  = setting.GetClientSetting()
+	RunningEngine *torrent.Engine
+	logger        = clientConfig.LoggerSetting.Logger
 )
 
 func InitRouter() *negroni.Negroni {
-	runningEngine = torrent.GetEngine()
+	RunningEngine = torrent.GetEngine()
 	router := httprouter.New()
 
 	// Enable router

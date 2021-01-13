@@ -13,7 +13,7 @@ func addOneMagnet(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 
 	logger.Debug(linkAddress)
 	
-	_, err := runningEngine.AddOneTorrentFromMagnet(linkAddress)
+	_, err := RunningEngine.AddOneTorrentFromMagnet(linkAddress)
 
 	var isAdded bool
 	if err != nil {
