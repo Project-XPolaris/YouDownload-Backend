@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"github.com/dustin/go-humanize"
 	"github.com/projectxpolaris/youdownload/backend/downloader"
 	"github.com/projectxpolaris/youdownload/backend/torrent"
@@ -35,38 +36,19 @@ func (w *Watcher) RunEngineWatcher() {
 		for {
 			<-time.After(1 * time.Second)
 			w.Lock()
+			w.tasks = []*TaskStatus{}
 			resInfo := []torrent.TorrentWebInfo{}
 			resInfo = AppendRunningTorrents(resInfo)
 			resInfo = AppendCompletedTorrents(resInfo)
 			for _, torrentTask := range resInfo {
-				newFlag := true
-				for _, task := range w.tasks {
-					if task.Id == torrentTask.HexString {
-						task.UpdateWithTorrent(&torrentTask)
-						newFlag = false
-						break
-					}
-				}
-				if newFlag {
-					newTask := &TaskStatus{}
-					newTask.UpdateWithTorrent(&torrentTask)
-					w.tasks = append(w.tasks, newTask)
-				}
+				newTask := &TaskStatus{}
+				newTask.UpdateWithTorrent(&torrentTask)
+				w.tasks = append(w.tasks, newTask)
 			}
 			for _, fileDownloadTask := range downloader.DefaultDownloader.Pool.Tasks {
-				newFlag := true
-				for _, task := range w.tasks {
-					if task.Id == fileDownloadTask.Id {
-						task.UpdateWithFileDownloadTask(fileDownloadTask)
-						newFlag = false
-						break
-					}
-				}
-				if newFlag {
-					newTask := &TaskStatus{}
-					newTask.UpdateWithFileDownloadTask(fileDownloadTask)
-					w.tasks = append(w.tasks, newTask)
-				}
+				newTask := &TaskStatus{}
+				newTask.UpdateWithFileDownloadTask(fileDownloadTask)
+				w.tasks = append(w.tasks, newTask)
 			}
 			w.Unlock()
 		}
@@ -88,11 +70,13 @@ func (t *TaskStatus) UpdateWithFileDownloadTask(task *downloader.Task) {
 	t.Type = TaskTypeFile
 	if task.Response != nil {
 		t.Progress = task.Response.Progress()
-	}else{
+		t.Speed = fmt.Sprintf("%s/s", humanize.Bytes(uint64(task.Response.BytesPerSecond())))
+		t.TotalSize = humanize.Bytes(uint64(task.Response.Size))
+	} else {
 		t.Progress = float64(task.SaveComplete) / float64(task.SaveTotal)
+		t.TotalSize = humanize.Bytes(uint64(task.SaveTotal))
 	}
 	t.Name = task.SaveFileName
-	t.TotalSize = humanize.Bytes(uint64(task.SaveTotal))
 	t.Status = downloader.TaskStatusToTextMapping[task.Status]
 
 }
@@ -115,5 +99,3 @@ func AppendCompletedTorrents(resInfo []torrent.TorrentWebInfo) []torrent.Torrent
 	}
 	return resInfo
 }
-
-

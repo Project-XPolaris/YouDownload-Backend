@@ -1,7 +1,6 @@
 package downloader
 
 import (
-	"fmt"
 	"github.com/projectxpolaris/youdownload/backend/database"
 	"github.com/sirupsen/logrus"
 )
@@ -48,7 +47,7 @@ func (s *TaskStore) Run() {
 	for {
 		select {
 		case info := <-s.SaveChan:
-			logrus.Info(fmt.Sprintf("save id = %s", info.TaskId))
+			//logrus.Info(fmt.Sprintf("save id = %s", info.TaskId))
 			saveInfo(info)
 		}
 	}

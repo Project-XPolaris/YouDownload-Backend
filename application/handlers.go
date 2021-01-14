@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/allentom/haruka"
 	"github.com/projectxpolaris/youdownload/backend/downloader"
+	"github.com/projectxpolaris/youdownload/backend/service"
 	"github.com/projectxpolaris/youdownload/backend/setting"
 	"github.com/projectxpolaris/youdownload/backend/torrent"
 	"io"
@@ -129,6 +130,28 @@ var deleteTorrentDownloadHandler haruka.RequestHandler = func(context *haruka.Co
 	e.DelOneTorrent(requestBody.Id)
 	SendSuccessResponse(context)
 }
+
+var getTorrentSettingHandler haruka.RequestHandler = func(context *haruka.Context) {
+	context.JSON(setting.GetClientSetting().GetWebSetting())
+}
+
+var applyTorrentSettingHandler haruka.RequestHandler = func(context *haruka.Context) {
+	var settingRequestBody setting.WebSetting
+	err := context.ParseJson(&settingRequestBody)
+	if err != nil {
+		Abort500Error(err, context)
+		return
+	}
+	e := torrent.GetEngine()
+	config := setting.GetClientSetting()
+	if e.EngineRunningInfo.HasRestarted == false {
+		e.EngineRunningInfo.HasRestarted = true
+		config.UpdateConfig(settingRequestBody)
+		e.Restart()
+		e.EngineRunningInfo.HasRestarted = false
+	}
+	SendSuccessResponse(context)
+}
 type AddLinkRequestBody struct {
 	Link string `json:"link"`
 	Dest string `json:"dest"`
@@ -176,4 +199,52 @@ var pauseFileDownloadTask haruka.RequestHandler = func(context *haruka.Context) 
 	}
 	downloader.DefaultDownloader.Pool.PauseTask(requestBody.Id)
 	SendSuccessResponse(context)
+}
+type DeleteFileDownloadRequestBody struct {
+	Id string `json:"id"`
+}
+var deleteDownloadTaskHandler haruka.RequestHandler  = func(context *haruka.Context) {
+	var requestBody DeleteFileDownloadRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		Abort500Error(err, context)
+		return
+	}
+	err = downloader.DefaultDownloader.Pool.DeleteTask(requestBody.Id)
+	if err != nil {
+		Abort500Error(err, context)
+		return
+	}
+	SendSuccessResponse(context)
+}
+
+type ReadDirectoryRequestBody struct {
+	Path string `json:"path"`
+}
+var readDirectoryHandler haruka.RequestHandler  = func(context *haruka.Context) {
+	var requestBody ReadDirectoryRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		Abort500Error(err, context)
+		return
+	}
+	if len(requestBody.Path) == 0{
+		homePath,err := os.UserHomeDir()
+		if err != nil {
+			Abort500Error(err, context)
+			return
+		}
+		requestBody.Path = homePath
+	}
+		items,err := service.ReadDirectory(requestBody.Path)
+	if err != nil {
+		Abort500Error(err, context)
+		return
+	}
+	abs,_ := filepath.Abs(requestBody.Path)
+	context.JSON(map[string]interface{}{
+		"path":abs,
+		"sep":string(filepath.Separator),
+		"files":items,
+	})
 }

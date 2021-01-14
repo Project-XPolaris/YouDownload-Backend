@@ -66,18 +66,48 @@ func (p *TaskPool) RemoveTask(taskId string) {
 		}
 	}
 	if targetIndex != -1 {
+		task := p.Tasks[targetIndex]
+		if task.Status == TaskStatusRunning {
+			task.Cancel()
+
+		}
 		p.Tasks = append(p.Tasks[:targetIndex], p.Tasks[targetIndex+1:]...)
 	}
+}
+
+func (p *TaskPool) DeleteTask(taskId string) error {
+	targetIndex := -1
+	for index, task := range p.Tasks {
+		if task.Id == taskId {
+			targetIndex = index
+			break
+		}
+	}
+	if targetIndex != -1 {
+		task := p.Tasks[targetIndex]
+		if task.Status == TaskStatusRunning {
+			task.Cancel()
+		}
+		err := database.Instance.DeleteStruct(&TaskSaveInfo{TaskId: task.Id})
+		if err != nil {
+			return err
+		}
+		p.Tasks = append(p.Tasks[:targetIndex], p.Tasks[targetIndex+1:]...)
+	}
+	return nil
 }
 
 const (
 	TaskStatusRunning = iota + 1
 	TaskStatusStopped
+	TaskStatusCompleted
+
 )
 
 var TaskStatusToTextMapping = map[int64]string{
 	TaskStatusRunning: "Running",
 	TaskStatusStopped: "Stopped",
+	TaskStatusCompleted: "Completed",
 }
 
 type Task struct {
@@ -152,6 +182,7 @@ func (e *FileDownloaderEngine) Run() {
 					Status:   TaskStatusRunning,
 				}
 
+				// check duplicate in save task
 				var saveTask TaskSaveInfo
 				err := database.Instance.Select(q.And(q.Eq("Url", taskConfig.Url), q.Eq("Dest", taskConfig.Dest))).First(&saveTask)
 				if err == nil && len(saveTask.TaskId) > 0 {
@@ -160,6 +191,7 @@ func (e *FileDownloaderEngine) Run() {
 					task.SaveFileName = saveTask.Filename
 				}
 
+				// make request
 				request, err := grab.NewRequest(taskConfig.Dest, taskConfig.Url)
 				if err != nil {
 					fmt.Println(err)
@@ -173,10 +205,25 @@ func (e *FileDownloaderEngine) Run() {
 				task.Request = request
 				response := e.Client.Do(request)
 				task.Response = response
+
+				// update with request result
+				task.SaveFileName = response.Filename
 				e.Pool.Lock()
 				e.Pool.RemoveTask(task.Id)
 				e.Pool.Tasks = append(e.Pool.Tasks, task)
 				e.Pool.Unlock()
+
+				//run for done chan
+				go func() {
+					select {
+					case <-response.Done:
+						task.Status = TaskStatusCompleted
+						logrus.Info("task complete")
+					case <-ctx.Done():
+						//task.Status = TaskStatusCompleted
+						logrus.Info("task interrupt")
+					}
+				}()
 			}
 		}
 	}()
