@@ -73,7 +73,13 @@ func (t *TaskStatus) UpdateWithFileDownloadTask(task *downloader.Task) {
 		t.Speed = fmt.Sprintf("%s/s", humanize.Bytes(uint64(task.Response.BytesPerSecond())))
 		t.TotalSize = humanize.Bytes(uint64(task.Response.Size))
 	} else {
-		t.Progress = float64(task.SaveComplete) / float64(task.SaveTotal)
+		total := float64(task.SaveTotal)
+		if total != 0 {
+			t.Progress = float64(task.SaveComplete) / float64(task.SaveTotal)
+		}else{
+			t.Progress = 0
+		}
+
 		t.TotalSize = humanize.Bytes(uint64(task.SaveTotal))
 	}
 	t.Name = task.SaveFileName
@@ -94,7 +100,7 @@ func AppendRunningTorrents(resInfo []torrent.TorrentWebInfo) []torrent.TorrentWe
 func AppendCompletedTorrents(resInfo []torrent.TorrentWebInfo) []torrent.TorrentWebInfo {
 	for _, singleTorrentLog := range torrent.GetEngine().EngineRunningInfo.TorrentLogs {
 		if singleTorrentLog.Status == torrent.CompletedStatus {
-			resInfo = append(resInfo, *torrent.GetEngine().GenerateInfoFromLog(singleTorrentLog))
+			resInfo = append(resInfo, *torrent.GetEngine().GenerateInfoFromLog(*singleTorrentLog))
 		}
 	}
 	return resInfo

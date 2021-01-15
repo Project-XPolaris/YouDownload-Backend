@@ -90,7 +90,7 @@ func AppendRunningTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWe
 func AppendCompletedTorrents(resInfo []torrent.TorrentWebInfo)([]torrent.TorrentWebInfo) {
 	for _, singleTorrentLog := range RunningEngine.EngineRunningInfo.TorrentLogs {
 		if singleTorrentLog.Status == torrent.CompletedStatus {
-			resInfo = append(resInfo, *RunningEngine.GenerateInfoFromLog(singleTorrentLog))
+			resInfo = append(resInfo, *RunningEngine.GenerateInfoFromLog(*singleTorrentLog))
 		}
 	}
 	return resInfo

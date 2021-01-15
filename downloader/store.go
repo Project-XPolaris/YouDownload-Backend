@@ -16,15 +16,23 @@ type TaskSaveInfo struct {
 }
 
 func NewTaskSaveInfoFromTask(task *Task) *TaskSaveInfo {
-	return &TaskSaveInfo{
-		TaskId:       task.Id,
-		Url:          task.Url,
-		Dest:         task.SavePath,
-		CompleteSize: task.Response.BytesComplete(),
-		Total:        task.Response.Size,
-		Status:       task.Status,
-		Filename: task.Response.Filename,
+	info := &TaskSaveInfo{
+		TaskId: task.Id,
+		Url:    task.Url,
+		Dest:   task.SavePath,
+		Status: task.Status,
 	}
+	if task.Response != nil {
+		info.CompleteSize = task.Response.BytesComplete()
+		info.Total = task.Response.Size
+		info.Filename = task.Response.Filename
+	}else{
+		info.CompleteSize = task.SaveComplete
+		info.Total = task.SaveTotal
+		info.Filename = task.SaveFileName
+	}
+	
+	return info
 }
 
 type TaskStore struct {

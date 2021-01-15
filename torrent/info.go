@@ -96,7 +96,7 @@ type TorrentLogFile struct {
 }
 type TorrentLogsAndID struct {
 	ID          OnlyStormID `storm:"id"`
-	TorrentLogs []TorrentLog
+	TorrentLogs []*TorrentLog
 }
 
 type TorrentStatus int
@@ -140,7 +140,7 @@ func (engineInfo *EngineInfo) AddOneTorrent(singleTorrent *torrent.Torrent) (sin
 	singleTorrentLog, isExist := engineInfo.HashToTorrentLog[singleTorrent.InfoHash()]
 	if !isExist {
 		singleTorrentLog = createTorrentLogFromTorrent(singleTorrent)
-		engineInfo.TorrentLogs = append(engineInfo.TorrentLogs, *singleTorrentLog)
+		engineInfo.TorrentLogs = append(engineInfo.TorrentLogs, singleTorrentLog)
 		engineInfo.UpdateTorrentLog()
 	}
 	return
@@ -151,7 +151,7 @@ func (engineInfo *EngineInfo) AddOneTorrentFromMagnet(infoHash metainfo.Hash) (s
 	singleTorrentLog, isExist := engineInfo.HashToTorrentLog[infoHash]
 	if !isExist {
 		singleTorrentLog = createTorrentLogFromMagnet(infoHash)
-		engineInfo.TorrentLogs = append(engineInfo.TorrentLogs, *singleTorrentLog)
+		engineInfo.TorrentLogs = append(engineInfo.TorrentLogs, singleTorrentLog)
 		engineInfo.UpdateTorrentLog()
 		//create extend log
 		_, extendIsExist := engineInfo.TorrentLogExtends[infoHash]
@@ -197,11 +197,11 @@ func (engineInfo *EngineInfo) UpdateTorrentLog() () {
 
 	for index, singleTorrentLog := range engineInfo.TorrentLogs {
 		if singleTorrentLog.Status != AnalysingStatus {
-			engineInfo.HashToTorrentLog[singleTorrentLog.HashInfoBytes()] = &engineInfo.TorrentLogs[index]
+			engineInfo.HashToTorrentLog[singleTorrentLog.HashInfoBytes()] = engineInfo.TorrentLogs[index]
 		} else {
 			torrentHash := metainfo.Hash{}
 			_ = torrentHash.FromHexString(singleTorrentLog.TorrentName)
-			engineInfo.HashToTorrentLog[torrentHash] = &engineInfo.TorrentLogs[index]
+			engineInfo.HashToTorrentLog[torrentHash] = engineInfo.TorrentLogs[index]
 		}
 	}
 }

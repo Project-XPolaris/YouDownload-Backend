@@ -7,15 +7,19 @@ import (
 	"github.com/projectxpolaris/youdownload/backend/service"
 	"github.com/projectxpolaris/youdownload/backend/setting"
 	"github.com/projectxpolaris/youdownload/backend/torrent"
+	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path/filepath"
 )
 
 var taskList haruka.RequestHandler = func(context *haruka.Context) {
-	context.JSON(map[string]interface{}{
+	err := context.JSON(map[string]interface{}{
 		"tasks": DefaultWatcher.tasks,
 	})
+	if err != nil {
+		logrus.Error(err)
+	}
 }
 
 type AddMagnetRequestBody struct {

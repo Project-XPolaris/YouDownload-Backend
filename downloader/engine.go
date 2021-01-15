@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 )
+var Logger = logrus.New().WithField("scope","TaskManager")
 type FileDownloaderEngine struct {
 	Client    *grab.Client
 	Pool      *TaskPool
@@ -45,7 +46,7 @@ func (p *TaskPool) PauseTask(taskId string) {
 	}
 }
 
-func (p *TaskPool) StartTask(taskId string)  {
+func (p *TaskPool) StartTask(taskId string) {
 
 	for _, task := range p.Tasks {
 		if task.Id == taskId {
@@ -101,28 +102,26 @@ const (
 	TaskStatusRunning = iota + 1
 	TaskStatusStopped
 	TaskStatusCompleted
-
 )
 
 var TaskStatusToTextMapping = map[int64]string{
-	TaskStatusRunning: "Running",
-	TaskStatusStopped: "Stopped",
+	TaskStatusRunning:   "Running",
+	TaskStatusStopped:   "Stopped",
 	TaskStatusCompleted: "Completed",
 }
 
 type Task struct {
-	Id       string
-	Request  *grab.Request
-	Response *grab.Response
-	Url      string
-	SavePath string
-	Err      error
-	Cancel   context.CancelFunc
-	Status   int64
+	Id           string
+	Request      *grab.Request
+	Response     *grab.Response
+	Url          string
+	SavePath     string
+	Err          error
+	Cancel       context.CancelFunc
+	Status       int64
 	SaveComplete int64
-	SaveTotal  int64
+	SaveTotal    int64
 	SaveFileName string
-
 }
 type NewTaskConfig struct {
 	Url  string
@@ -137,18 +136,17 @@ func (e *FileDownloaderEngine) Run() {
 		log.Fatal(err)
 	}
 	for _, saveTask := range saveTasks {
-		logrus.Info(saveTask.TaskId)
 		e.Pool.Tasks = append(e.Pool.Tasks, &Task{
 			Id:           saveTask.TaskId,
 			Url:          saveTask.Url,
 			SavePath:     saveTask.Dest,
-			Status:       TaskStatusStopped,
+			Status:       saveTask.Status,
 			SaveComplete: saveTask.CompleteSize,
 			SaveTotal:    saveTask.Total,
 			SaveFileName: saveTask.Filename,
 		})
-
 	}
+	Logger.Info(fmt.Sprintf("success load %d task from database", len(e.Pool.Tasks)))
 	// for task store
 	go func() {
 		e.TaskStore.Run()
@@ -161,10 +159,8 @@ func (e *FileDownloaderEngine) Run() {
 			select {
 			case <-ticker.C:
 				for _, task := range e.Pool.Tasks {
-					if task.Status == TaskStatusRunning {
-						taskSaveInfo := NewTaskSaveInfoFromTask(task)
-						e.TaskStore.SaveChan <- taskSaveInfo
-					}
+					taskSaveInfo := NewTaskSaveInfoFromTask(task)
+					e.TaskStore.SaveChan <- taskSaveInfo
 				}
 			}
 		}
@@ -201,7 +197,7 @@ func (e *FileDownloaderEngine) Run() {
 				ctx, cancel := context.WithCancel(context.Background())
 				task.Cancel = cancel
 				request = request.WithContext(ctx)
-				fmt.Printf("Downloading %v...\n", request.URL())
+				Logger.WithField("id",task.Id).WithField("url",request.URL()).Info("Downloading")
 				task.Request = request
 				response := e.Client.Do(request)
 				task.Response = response
@@ -213,15 +209,23 @@ func (e *FileDownloaderEngine) Run() {
 				e.Pool.Tasks = append(e.Pool.Tasks, task)
 				e.Pool.Unlock()
 
+				// update task save info
+				saveInfo := NewTaskSaveInfoFromTask(task)
+				e.TaskStore.SaveChan <- saveInfo
+
 				//run for done chan
 				go func() {
 					select {
 					case <-response.Done:
 						task.Status = TaskStatusCompleted
-						logrus.Info("task complete")
+						Logger.WithField("id",task.Id).Info("task complete")
+						saveInfo = NewTaskSaveInfoFromTask(task)
+						e.TaskStore.SaveChan <- saveInfo
 					case <-ctx.Done():
-						//task.Status = TaskStatusCompleted
-						logrus.Info("task interrupt")
+						task.Status = TaskStatusStopped
+						saveInfo = NewTaskSaveInfoFromTask(task)
+						e.TaskStore.SaveChan <- saveInfo
+						Logger.WithField("id",task.Id).Info("task interrupt")
 					}
 				}()
 			}
