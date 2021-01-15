@@ -26,6 +26,7 @@ func RunApiService() {
 	e.Router.POST("/file/pause", pauseFileDownloadTask)
 	e.Router.POST("/file/start", startFileDownloadTask)
 	e.Router.POST("/file/delete", deleteDownloadTaskHandler)
+	e.Router.POST("/file/limit", updateDownloadTaskLimitHandler)
 	e.Router.POST("/util/readDir", readDirectoryHandler)
 	go DefaultWatcher.RunEngineWatcher()
 	e.UseCors(cors.AllowAll())

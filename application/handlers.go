@@ -222,6 +222,26 @@ var deleteDownloadTaskHandler haruka.RequestHandler  = func(context *haruka.Cont
 	SendSuccessResponse(context)
 }
 
+
+type LimitFileDownloadRequestBody struct {
+	Id string `json:"id"`
+	Rate int `json:"rate"`
+}
+var updateDownloadTaskLimitHandler haruka.RequestHandler  = func(context *haruka.Context) {
+	var requestBody LimitFileDownloadRequestBody
+	err := context.ParseJson(&requestBody)
+	if err != nil {
+		Abort500Error(err, context)
+		return
+	}
+	err = downloader.DefaultDownloader.Pool.UpdateTaskLimiter(requestBody.Id,requestBody.Rate)
+	if err != nil {
+		Abort500Error(err, context)
+		return
+	}
+	SendSuccessResponse(context)
+}
+
 type ReadDirectoryRequestBody struct {
 	Path string `json:"path"`
 }

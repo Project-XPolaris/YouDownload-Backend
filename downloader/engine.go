@@ -12,7 +12,9 @@ import (
 	"sync"
 	"time"
 )
-var Logger = logrus.New().WithField("scope","TaskManager")
+
+var Logger = logrus.New().WithField("scope", "TaskManager")
+
 type FileDownloaderEngine struct {
 	Client    *grab.Client
 	Pool      *TaskPool
@@ -70,7 +72,6 @@ func (p *TaskPool) RemoveTask(taskId string) {
 		task := p.Tasks[targetIndex]
 		if task.Status == TaskStatusRunning {
 			task.Cancel()
-
 		}
 		p.Tasks = append(p.Tasks[:targetIndex], p.Tasks[targetIndex+1:]...)
 	}
@@ -98,6 +99,40 @@ func (p *TaskPool) DeleteTask(taskId string) error {
 	return nil
 }
 
+func (p *TaskPool) UpdateTaskLimiter(taskId string, rate int) error {
+	targetIndex := -1
+	for index, task := range p.Tasks {
+		if task.Id == taskId {
+			targetIndex = index
+			break
+		}
+	}
+	if targetIndex == -1 {
+		return nil
+	}
+
+	// restart with limiter
+	task := p.Tasks[targetIndex]
+	if task.Status == TaskStatusCompleted {
+		return nil
+	}
+
+
+
+	if task.Status == TaskStatusRunning {
+		task.Cancel()
+		p.NewTaskChan <- NewTaskConfig{
+			Url:  task.Url,
+			Dest: task.SavePath,
+			UseLimit: true,
+			Limit: rate,
+		}
+	}
+	task.Limit = rate
+	DefaultDownloader.TaskStore.SaveChan <- NewTaskSaveInfoFromTask(task)
+	return nil
+}
+
 const (
 	TaskStatusRunning = iota + 1
 	TaskStatusStopped
@@ -114,6 +149,7 @@ type Task struct {
 	Id           string
 	Request      *grab.Request
 	Response     *grab.Response
+	Limit        int
 	Url          string
 	SavePath     string
 	Err          error
@@ -124,8 +160,10 @@ type Task struct {
 	SaveFileName string
 }
 type NewTaskConfig struct {
-	Url  string
-	Dest string
+	Url   string
+	Dest  string
+	Limit int
+	UseLimit bool
 }
 
 func (e *FileDownloaderEngine) Run() {
@@ -144,6 +182,7 @@ func (e *FileDownloaderEngine) Run() {
 			SaveComplete: saveTask.CompleteSize,
 			SaveTotal:    saveTask.Total,
 			SaveFileName: saveTask.Filename,
+			Limit: saveTask.Limit,
 		})
 	}
 	Logger.Info(fmt.Sprintf("success load %d task from database", len(e.Pool.Tasks)))
@@ -176,7 +215,10 @@ func (e *FileDownloaderEngine) Run() {
 					SavePath: taskConfig.Dest,
 					Url:      taskConfig.Url,
 					Status:   TaskStatusRunning,
+					Limit:    taskConfig.Limit,
 				}
+
+
 
 				// check duplicate in save task
 				var saveTask TaskSaveInfo
@@ -185,6 +227,10 @@ func (e *FileDownloaderEngine) Run() {
 					// exist
 					task.Id = saveTask.TaskId
 					task.SaveFileName = saveTask.Filename
+
+					if !taskConfig.UseLimit {
+						task.Limit = saveTask.Limit
+					}
 				}
 
 				// make request
@@ -194,11 +240,16 @@ func (e *FileDownloaderEngine) Run() {
 					task.Err = err
 					return
 				}
+				if task.Limit != 0 {
+					request.RateLimiter = NewLimiter(task.Limit)
+				}
 				ctx, cancel := context.WithCancel(context.Background())
 				task.Cancel = cancel
 				request = request.WithContext(ctx)
-				Logger.WithField("id",task.Id).WithField("url",request.URL()).Info("Downloading")
+				Logger.WithField("id", task.Id).WithField("url", request.URL()).Info("Downloading")
 				task.Request = request
+
+				// request download url
 				response := e.Client.Do(request)
 				task.Response = response
 
@@ -218,14 +269,14 @@ func (e *FileDownloaderEngine) Run() {
 					select {
 					case <-response.Done:
 						task.Status = TaskStatusCompleted
-						Logger.WithField("id",task.Id).Info("task complete")
+						Logger.WithField("id", task.Id).Info("task complete")
 						saveInfo = NewTaskSaveInfoFromTask(task)
 						e.TaskStore.SaveChan <- saveInfo
 					case <-ctx.Done():
 						task.Status = TaskStatusStopped
 						saveInfo = NewTaskSaveInfoFromTask(task)
 						e.TaskStore.SaveChan <- saveInfo
-						Logger.WithField("id",task.Id).Info("task interrupt")
+						Logger.WithField("id", task.Id).Info("task interrupt")
 					}
 				}()
 			}

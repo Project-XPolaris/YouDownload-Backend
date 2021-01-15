@@ -13,6 +13,7 @@ type TaskSaveInfo struct {
 	Total        int64  `storm:"index"`
 	Status       int64  `storm:"index"`
 	Filename     string `storm:"index"`
+	Limit        int    `storm:"index"`
 }
 
 func NewTaskSaveInfoFromTask(task *Task) *TaskSaveInfo {
@@ -21,17 +22,18 @@ func NewTaskSaveInfoFromTask(task *Task) *TaskSaveInfo {
 		Url:    task.Url,
 		Dest:   task.SavePath,
 		Status: task.Status,
+		Limit:  task.Limit,
 	}
 	if task.Response != nil {
 		info.CompleteSize = task.Response.BytesComplete()
 		info.Total = task.Response.Size
 		info.Filename = task.Response.Filename
-	}else{
+	} else {
 		info.CompleteSize = task.SaveComplete
 		info.Total = task.SaveTotal
 		info.Filename = task.SaveFileName
 	}
-	
+
 	return info
 }
 
