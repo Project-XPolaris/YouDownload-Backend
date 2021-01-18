@@ -87,7 +87,7 @@ func (p *TaskPool) DeleteTask(taskId string) error {
 	}
 	if targetIndex != -1 {
 		task := p.Tasks[targetIndex]
-		if task.Status == TaskStatusRunning {
+		if task.Status == TaskStatusRunning && task.Cancel != nil {
 			task.Cancel()
 		}
 		err := database.Instance.DeleteStruct(&TaskSaveInfo{TaskId: task.Id})
@@ -117,15 +117,13 @@ func (p *TaskPool) UpdateTaskLimiter(taskId string, rate int) error {
 		return nil
 	}
 
-
-
 	if task.Status == TaskStatusRunning {
 		task.Cancel()
 		p.NewTaskChan <- NewTaskConfig{
-			Url:  task.Url,
-			Dest: task.SavePath,
+			Url:      task.Url,
+			Dest:     task.SavePath,
 			UseLimit: true,
-			Limit: rate,
+			Limit:    rate,
 		}
 	}
 	task.Limit = rate
@@ -160,9 +158,9 @@ type Task struct {
 	SaveFileName string
 }
 type NewTaskConfig struct {
-	Url   string
-	Dest  string
-	Limit int
+	Url      string
+	Dest     string
+	Limit    int
 	UseLimit bool
 }
 
@@ -178,11 +176,11 @@ func (e *FileDownloaderEngine) Run() {
 			Id:           saveTask.TaskId,
 			Url:          saveTask.Url,
 			SavePath:     saveTask.Dest,
-			Status:       saveTask.Status,
+			Status:       TaskStatusStopped,
 			SaveComplete: saveTask.CompleteSize,
 			SaveTotal:    saveTask.Total,
 			SaveFileName: saveTask.Filename,
-			Limit: saveTask.Limit,
+			Limit:        saveTask.Limit,
 		})
 	}
 	Logger.Info(fmt.Sprintf("success load %d task from database", len(e.Pool.Tasks)))
@@ -218,8 +216,6 @@ func (e *FileDownloaderEngine) Run() {
 					Limit:    taskConfig.Limit,
 				}
 
-
-
 				// check duplicate in save task
 				var saveTask TaskSaveInfo
 				err := database.Instance.Select(q.And(q.Eq("Url", taskConfig.Url), q.Eq("Dest", taskConfig.Dest))).First(&saveTask)
@@ -243,6 +239,7 @@ func (e *FileDownloaderEngine) Run() {
 				if task.Limit != 0 {
 					request.RateLimiter = NewLimiter(task.Limit)
 				}
+				request.BufferSize = 1024
 				ctx, cancel := context.WithCancel(context.Background())
 				task.Cancel = cancel
 				request = request.WithContext(ctx)
@@ -252,7 +249,6 @@ func (e *FileDownloaderEngine) Run() {
 				// request download url
 				response := e.Client.Do(request)
 				task.Response = response
-
 				// update with request result
 				task.SaveFileName = response.Filename
 				e.Pool.Lock()
